@@ -29,3 +29,6 @@ target/
 *.iml
 logs/
 /src/test/
+
+# config
+/src/main/resources/application.yml
