@@ -11,6 +11,7 @@ public class ChatResponse {
 
     public String firstReply() {
         if (choices == null || choices.isEmpty()) {
+            // 兜底回复
             return "……我在这里。";
         }
         return choices.get(0).getMessage().content();
