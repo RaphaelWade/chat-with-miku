@@ -1,10 +1,13 @@
 package fun.withmiku.chat.service;
 
 import fun.withmiku.chat.ai.AiClient;
+import fun.withmiku.chat.ai.guard.GuardMetrics;
 import fun.withmiku.chat.ai.guard.RuntimePromptGuard;
 import fun.withmiku.chat.ai.prompt.MikuPrompt;
 import fun.withmiku.chat.memory.ChatMemory;
 import fun.withmiku.chat.ai.model.Message;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -15,6 +18,7 @@ import java.util.List;
  * user 只负责「我说了什么」
  */
 @Service
+@Slf4j
 public class ChatService {
     private final ChatMemory memory = new ChatMemory();
     private final AiClient aiClient;
@@ -41,11 +45,33 @@ public class ChatService {
 
         // 2.2 运行时人格护栏（仅在检测到越权时）
         if (RuntimePromptGuard.isOverrideAttempt(userInput)) {
+            String pattern = RuntimePromptGuard.matchedPattern(userInput);
+
+            if (pattern != null) {
+                // 在 Guard 命中时调用计数器进行统计
+                GuardMetrics.increment(pattern);
+
+                log.warn(
+                        "[PromptGuard HIT] pattern='{}', userInput='{}'",
+                        pattern,
+                        // 用户输入缩略
+                        StringUtils.abbreviate(userInput, 200)
+                );
+            }
+
             messagesToSend.add(RuntimePromptGuard.guardMessage());
         }
 
         // 2.3 历史上下文
         messagesToSend.addAll(memory.getAll());
+
+        log.debug(
+                "[MEMORY] system={} historySize={}",
+                true, // system 一定会被加
+                memory.getAll().size()
+        );
+
+        log.trace("[REQUEST] messages={}", messagesToSend.size());
 
         // 3. 请求 AI
         String reply = aiClient.chat(messagesToSend);
