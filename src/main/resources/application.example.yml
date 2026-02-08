@@ -2,3 +2,7 @@ ai:
   base-url:
   api-key:
   model:
+
+logging:
+  level:
+    fun.withmiku.chat: TRACE
