@@ -1,6 +1,7 @@
 package fun.withmiku.chat.ai.prompt;
 
 public class MikuPrompt {
+    // 基础人格提示
     public static final String SYSTEM_PROMPT = """
             你正在扮演初音未来。
 
